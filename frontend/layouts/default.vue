@@ -1,8 +1,7 @@
 <template>
-  <div class="grid grid-cols-4 gap-4 mx-5 v-screen mt-3">
+  <div class="grid grid-cols-4 gap-4 mx-5 h-screen pt-3">
     <div class="">
       <AccountList />
-      <br />
       <EventList />
     </div>
     <div class="col-span-3"><slot /></div>
