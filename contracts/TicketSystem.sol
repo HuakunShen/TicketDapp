@@ -6,9 +6,12 @@ contract TicketSystem {
 
   struct Event {
     uint id;
+    string name;
     address payable seller;
-    uint resellPriceMaxFactor; // ticket for resell can be sold at max resellPriceMaxFactor original price
+    uint resellPriceMaxFactor; // ticket for resell can be sold at max resellPriceMaxFactor% original price, e.g. 150 means max resell price is 150% of original price
     bool returnable; // ticket can be returned to seller
+    uint buybackBonus; // if ticket is removed, seller have to buy back with ticket's current price + buybackBonus
+    bool buybackAble; // whether seller can force buy back ticket at a higher price
   }
 
   enum TicketTier {Regular, VIP}
@@ -35,9 +38,9 @@ contract TicketSystem {
   event TicketSold(uint ticketId, uint eventId, address seller, address buyer, uint price);
 
   // create an event with msg sender and return event id
-  function createEvent(uint resellPriceMaxFactor, bool returnable) public returns (uint) {
+  function createEvent(string memory name, uint resellPriceMaxFactor, uint buybackBonus, bool returnable, bool buybackAble) public returns (uint) {
     eventCount++;
-    Event memory evt = Event(eventCount, payable(msg.sender), resellPriceMaxFactor, returnable);
+    Event memory evt = Event(eventCount, name, payable(msg.sender), resellPriceMaxFactor, returnable, buybackBonus, buybackAble);
     events.push(evt);
     return eventCount;
   }
@@ -115,11 +118,22 @@ contract TicketSystem {
     Ticket storage ticket = tickets[ticketId];
     require(msg.sender == ticket.owner, "Only ticket owner can resell ticket");
     Event storage evt = events[ticket.eventId];
-    require(price <= ticket.originalPrice * evt.resellPriceMaxFactor, "Resell price too high");
+    require(price <= ticket.originalPrice * evt.resellPriceMaxFactor / 100, "Resell price too high");
     ticket.price = price;
     ticket.available = true;
     emit TicketAvailable(ticketId, ticket.eventId, msg.sender, price, ticket.tier);
   }
-  
 
+  // seller can force buy back ticket, but have to pay current price + buybackBonus. Only ticket's event seller can buy back
+  function buyback(uint ticketId) public {
+    require(ticketId <= ticketCount, "Ticket not found");
+    Ticket storage ticket = tickets[ticketId];
+    Event storage evt = events[ticket.eventId];
+    require(msg.sender == evt.seller, "Only event seller can buy back ticket");
+    require(evt.buybackAble, "Buy back not allowed for this event");
+    ticket.owner.transfer(ticket.price + evt.buybackBonus);
+    ticket.owner = evt.seller; // reset ticket owner to seller
+    ticket.price = ticket.originalPrice; // reset ticket listed price to original price
+    ticket.available = false; // by default, ticket is not available after buy back, seller can resell it
+  }
 }
