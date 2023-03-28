@@ -57,7 +57,7 @@ async function createTicket() {
       ticketPayload.price,
       ticketPayload.tier
     )
-    .send({ from: $store.curAccount });
+    .send({ from: $store.curAccount, gasPrice: 276314047, gas: 3000000 });
   console.log(res);
 }
 </script>

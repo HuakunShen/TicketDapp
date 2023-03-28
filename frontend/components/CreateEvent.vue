@@ -98,7 +98,7 @@ const createEvent = async () => {
       from: $store.curAccount,
       gasPrice: 276314047,
       gas: 3000000,
-      value: 10,
+      // value: 10,
     })
     .then((createEventRes: unknown) => {
       console.log(createEventRes);

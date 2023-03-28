@@ -58,9 +58,6 @@ contract TicketSystem {
         for (uint256 i = 0; i < 5; i++) {
             createTicket(0, 10, TicketTier.Regular);
         }
-        for (uint256 i = 0; i < 5; i++) {
-            createTicket(0, 20, TicketTier.VIP);
-        }
     }
 
     // the avaiable event is to notify the network that a ticket is available for sale, so that people do not need to query all tickets
@@ -240,5 +237,18 @@ contract TicketSystem {
         ticket.owner = evt.seller; // reset ticket owner to seller
         ticket.price = ticket.originalPrice; // reset ticket listed price to original price
         ticket.available = false; // by default, ticket is not available after buy back, seller can resell it
+    }
+
+    function myTickets() public view returns (Ticket[] memory) {
+        Ticket[] memory _tickets;
+        uint256 count = 0;
+        for (uint256 i = 1; i <= ticketCount; i++) {
+            Ticket memory ticket = tickets[i];
+            if (ticket.owner == msg.sender) {
+                _tickets[count] = ticket;
+                count++;
+            }
+        }
+        return _tickets;
     }
 }

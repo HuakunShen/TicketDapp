@@ -51,13 +51,16 @@ const placeHolderTickets = [
 const tickets = ref(placeHolderTickets);
 
 function reloadAllTickets() {
-  //   TicketSystemContract.methods
-  //     .getTickets()
-  //     .call()
-  //     .then((events: any) => {
-  //       console.log(events);
-  //       // $store.setEvents(events);
-  //     });
+  TicketSystemContract.methods
+    .myTickets()
+    .call({ from: $store.curAccount })
+    .then((_tickets: any) => {
+      console.log(_tickets);
+      // $store.setEvents(events);
+    })
+    .catch((err: any) => {
+      console.log(err);
+    });
 }
 
 reloadAllTickets();
