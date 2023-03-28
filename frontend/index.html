@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7/web3.js"
+        integrity="sha512-fy0QLHporAlL073GVvyMRGjQvT2qaMuM2v/UBPu+jYavDrYKCBiWGbFbkxTSl6T4XmG15aAe0OMeM0yP1Ckvxg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var contractABI = [];
+        var contractAddress = '0xA53da5be5A2c0E2bC618eFb030C4389C01D42E65';
+        var web3 = new Web3('http://localhost:9545');
+        var simpleSmartContract = new web3.eth.Contract(contractABI, contractAddress);
+
+        console.log(simpleSmartContract);
+
+        web3.eth.getAccounts()
+            .then(console.log);
+
+    </script>
+</body>
+
+</html>

@@ -7,7 +7,7 @@ const TicketSystem = artifacts.require("TicketSystem");
  */
 contract("TicketSystem", function (/* accounts */) {
   it("should assert true", async function () {
-    await TicketSystem.deployed();
-    return assert.isTrue(true);
+    let app = await TicketSystem.deployed();
+    console.log(await app.getEvents());
   });
 });

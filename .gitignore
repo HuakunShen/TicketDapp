@@ -1,1 +1,4 @@
 contracts/artifacts
+.deps
+tests/artifacts
+build
