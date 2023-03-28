@@ -30,6 +30,10 @@ contract TicketSystem {
   Ticket [] public tickets;
   Event [] public events;
 
+  // the avaiable event is to notify the network that a ticket is available for sale, so that people do not need to query all tickets
+  event TicketAvailable(uint ticketId, uint eventId, address owner, uint price, TicketTier tier);
+  event TicketSold(uint ticketId, uint eventId, address seller, address buyer, uint price);
+
   // create an event with msg sender and return event id
   function createEvent(uint resellPriceMaxFactor, bool returnable) public returns (uint) {
     eventCount++;
@@ -51,6 +55,7 @@ contract TicketSystem {
     ticketCount++;
     Ticket memory ticket = Ticket(ticketCount, eventId, payable(msg.sender), price, price, tier, true);
     tickets.push(ticket);
+    emit TicketAvailable(ticketCount, eventId, msg.sender, price, tier);
   }
 
   // anyone can buy a ticket, transfer money from msg.sender to ticket owner
@@ -61,6 +66,7 @@ contract TicketSystem {
     require(msg.value == ticket.price, "Incorrect payment amount");
     ticket.owner.transfer(msg.value);
     ticket.available = false;
+    emit TicketSold(ticketId, ticket.eventId, ticket.owner, msg.sender, ticket.price);
   }
 
   function getTicketCountByTier(uint eventId, TicketTier tier) public view returns (uint) {
@@ -85,6 +91,7 @@ contract TicketSystem {
     ticket.owner = evt.seller; // reset ticket owner to seller
     ticket.price = ticket.originalPrice; // reset ticket listed price to original price
     ticket.available = true; // ticket is still available for resell
+    emit TicketAvailable(ticketId, ticket.eventId, evt.seller, ticket.originalPrice, ticket.tier);
   }
 
 
@@ -111,6 +118,7 @@ contract TicketSystem {
     require(price <= ticket.originalPrice * evt.resellPriceMaxFactor, "Resell price too high");
     ticket.price = price;
     ticket.available = true;
+    emit TicketAvailable(ticketId, ticket.eventId, msg.sender, price, ticket.tier);
   }
   
 
