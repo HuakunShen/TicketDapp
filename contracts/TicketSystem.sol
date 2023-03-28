@@ -7,7 +7,7 @@ contract TicketSystem {
   struct Event {
     uint id;
     string name;
-    address payable seller;
+    address seller;
     uint resellPriceMaxFactor; // ticket for resell can be sold at max resellPriceMaxFactor% original price, e.g. 150 means max resell price is 150% of original price
     bool returnable; // ticket can be returned to seller
     uint buybackBonus; // if ticket is removed, seller have to buy back with ticket's current price + buybackBonus
@@ -19,7 +19,7 @@ contract TicketSystem {
   struct Ticket {
     uint id;
     uint eventId;
-    address payable owner;
+    address owner;
     uint originalPrice;
     uint price;
     TicketTier tier;
@@ -30,6 +30,7 @@ contract TicketSystem {
   uint public eventCount = 0;
   uint public ticketCount = 0;
 
+
   Ticket [] public tickets;
   Event [] public events;
 
@@ -39,9 +40,9 @@ contract TicketSystem {
 
   // create an event with msg sender and return event id
   function createEvent(string memory name, uint resellPriceMaxFactor, uint buybackBonus, bool returnable, bool buybackAble) public returns (uint) {
-    eventCount++;
-    Event memory evt = Event(eventCount, name, payable(msg.sender), resellPriceMaxFactor, returnable, buybackBonus, buybackAble);
+    Event memory evt = Event(eventCount, name, msg.sender, resellPriceMaxFactor, returnable, buybackBonus, buybackAble);
     events.push(evt);
+    eventCount++;
     return eventCount;
   }
 
@@ -55,10 +56,14 @@ contract TicketSystem {
     require(eventId <= eventCount, "Event not found");
     Event storage evt = events[eventId];
     require(msg.sender == evt.seller, "Only seller can create ticket");
-    ticketCount++;
-    Ticket memory ticket = Ticket(ticketCount, eventId, payable(msg.sender), price, price, tier, true);
+    Ticket memory ticket = Ticket(ticketCount, eventId, msg.sender, price, price, tier, true);
     tickets.push(ticket);
+    ticketCount++;
     emit TicketAvailable(ticketCount, eventId, msg.sender, price, tier);
+  }
+
+  function getAllTicket() public view returns (Ticket [] memory) {
+    return tickets;
   }
 
   // anyone can buy a ticket, transfer money from msg.sender to ticket owner
@@ -67,15 +72,15 @@ contract TicketSystem {
     Ticket storage ticket = tickets[ticketId];
     require(ticket.available, "Ticket not available");
     require(msg.value == ticket.price, "Incorrect payment amount");
-    ticket.owner.transfer(msg.value);
+    payable(ticket.owner).transfer(msg.value);
     ticket.available = false;
     emit TicketSold(ticketId, ticket.eventId, ticket.owner, msg.sender, ticket.price);
   }
 
-  function getTicketCountByTier(uint eventId, TicketTier tier) public view returns (uint) {
+  function getTicketCountByTier(uint eventId, TicketTier tier) public view returns(uint) {
     uint count = 0;
     for (uint i = 1; i <= ticketCount; i++) {
-      Ticket storage ticket = tickets[i];
+      Ticket memory ticket = tickets[i];
       if (ticket.eventId == eventId && ticket.tier == tier) {
         count++;
       }
@@ -90,7 +95,7 @@ contract TicketSystem {
     require(msg.sender == ticket.owner, "Only ticket owner can return ticket");
     Event storage evt = events[ticket.eventId];
     require(evt.returnable, "Ticket not returnable");
-    evt.seller.transfer(ticket.originalPrice);
+    payable(evt.seller).transfer(ticket.originalPrice);
     ticket.owner = evt.seller; // reset ticket owner to seller
     ticket.price = ticket.originalPrice; // reset ticket listed price to original price
     ticket.available = true; // ticket is still available for resell
@@ -99,18 +104,19 @@ contract TicketSystem {
 
 
 
-  function getTicketsForEvent(uint eventId, TicketTier tier) public view returns (Ticket [] memory) {
-    Ticket [] memory _tickets = new Ticket[](ticketCount);
-    uint count = 0;
-    for (uint i = 1; i <= ticketCount; i++) {
-      Ticket storage ticket = tickets[i];
-      if (ticket.eventId == eventId && ticket.tier == tier) {
-        _tickets[count] = ticket;
-        count++;
-      }
-    }
-    return _tickets;
-  }
+  // function getTicketsForEvent(uint eventId, TicketTier tier) public view returns (Ticket [] memory) {
+  //   Ticket [] memory _tickets;
+  //   uint count = 0;
+  //   for (uint i = 1; i <= ticketCount; i++) {
+  //     Ticket memory ticket = tickets[i];
+  //     if (ticket.eventId == eventId && ticket.tier == tier) {
+  //       // _tickets[count] = ticket;
+  //       _tickets.push(ticket);
+  //       count++;
+  //     }
+  //   }
+  //   return _tickets;
+  // }
 
   // list ticket for resell, make it available
   function resellTicket(uint ticketId, uint price) public {
@@ -131,9 +137,10 @@ contract TicketSystem {
     Event storage evt = events[ticket.eventId];
     require(msg.sender == evt.seller, "Only event seller can buy back ticket");
     require(evt.buybackAble, "Buy back not allowed for this event");
-    ticket.owner.transfer(ticket.price + evt.buybackBonus);
+    payable(ticket.owner).transfer(ticket.price + evt.buybackBonus);
     ticket.owner = evt.seller; // reset ticket owner to seller
     ticket.price = ticket.originalPrice; // reset ticket listed price to original price
     ticket.available = false; // by default, ticket is not available after buy back, seller can resell it
   }
 }
+
